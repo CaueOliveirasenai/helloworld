@@ -10,10 +10,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Minha Localização',
-      home: const LocalizacaoPage(),
+      title: 'Distância até minha casa',
+      home: LocalizacaoPage(),
     );
   }
 }
@@ -26,10 +26,12 @@ class LocalizacaoPage extends StatefulWidget {
 }
 
 class _LocalizacaoPageState extends State<LocalizacaoPage> {
-  double latitude = 0;
-  double longitude = 0;
+  double distancia = 0;
 
-  Future<void> buscarLocalizacao() async {
+  final double latitudeCasa = -21.462377243441573;
+  final double longitudeCasa = -47.02236487551663;
+
+  Future<void> calcularDistancia() async {
     bool servicoAtivo = await Geolocator.isLocationServiceEnabled();
 
     if (!servicoAtivo) {
@@ -48,56 +50,69 @@ class _LocalizacaoPageState extends State<LocalizacaoPage> {
       return;
     }
 
-    Position posicao = await Geolocator.getCurrentPosition();
+    // Localização atual, que será a escola
+    Position posicaoAtual = await Geolocator.getCurrentPosition();
+
+    // O Geolocator retorna a distância em metros
+    double distanciaEmMetros = Geolocator.distanceBetween(
+      posicaoAtual.latitude,
+      posicaoAtual.longitude,
+      latitudeCasa,
+      longitudeCasa,
+    );
 
     setState(() {
-      latitude = posicao.latitude;
-      longitude = posicao.longitude;
+      // Converte metros para quilômetros
+      distancia = distanciaEmMetros / 1000;
     });
 
-    print('Latitude: $latitude');
-    print('Longitude: $longitude');
+    print('Distância: $distancia km');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Minha Localização')),
-
+      appBar: AppBar(
+        title: const Text('Distância até minha casa'),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
-
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
-
             children: [
-              const Icon(Icons.location_on, size: 100, color: Colors.red),
+              const Icon(
+                Icons.home,
+                size: 80,
+                color: Colors.blue,
+              ),
 
               const SizedBox(height: 20),
 
               const Text(
-                'Localização Atual',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                'Distância entre a escola e minha casa',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
 
               const SizedBox(height: 30),
 
-              Text('Latitude: $latitude', style: const TextStyle(fontSize: 18)),
-
-              const SizedBox(height: 10),
-
               Text(
-                'Longitude: $longitude',
+                distancia == 0
+                    ? 'Clique no botão para calcular'
+                    : 'Distância: ${distancia.toStringAsFixed(2)} km',
                 style: const TextStyle(fontSize: 18),
               ),
 
               const SizedBox(height: 30),
 
               ElevatedButton(
-                onPressed: buscarLocalizacao,
-                child: const Text('Atualizar Localização'),
+                onPressed: calcularDistancia,
+                child: const Text('Calcular distância'),
               ),
             ],
           ),
